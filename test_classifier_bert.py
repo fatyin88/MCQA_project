@@ -434,38 +434,6 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
 
     return results
 
-def get_predictions(model, dataloader):
-    predictions = None
-      
-    with torch.no_grad():
-        # 遍巡整個資料集
-        for data in dataloader:
-            # 將所有 tensors 移到 GPU 上
-            if next(model.parameters()).is_cuda:
-                data = [t.to("cuda:0") for t in data if t is not None]
-            
-            batch = tuple(t.to(args.device) for t in data)
-            
-            # 別忘記前 3 個 tensors 分別為 tokens, segments 以及 masks
-            # 且強烈建議在將這些 tensors 丟入 `model` 時指定對應的參數名稱
-            inputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1],
-                      'token_type_ids': batch[2],  # XLM don't use segment_ids
-                      'labels':         batch[3],
-                      'task_id':        task_id}
-            outputs = model(**inputs)
-            tmp_eval_loss, logits = outputs[:2]
-            
-            _, pred = torch.max(logits.data, 1)
-            
-            # 將當前 batch 記錄下來
-            if predictions is None:
-                predictions = pred
-            else:
-                predictions = torch.cat((predictions, pred))
-    
-    return predictions
-    
     
 def convert_features_to_tensors(features, output_mode, is_multi_choice=True):
 

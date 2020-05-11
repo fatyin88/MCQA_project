@@ -434,10 +434,8 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
 
     return results
 
-def get_predictions(model, dataloader, compute_acc=False):
+def get_predictions(model, dataloader):
     predictions = None
-    correct = 0
-    total = 0
       
     with torch.no_grad():
         # 遍巡整個資料集
@@ -446,32 +444,26 @@ def get_predictions(model, dataloader, compute_acc=False):
             if next(model.parameters()).is_cuda:
                 data = [t.to("cuda:0") for t in data if t is not None]
             
+            batch = tuple(t.to(args.device) for t in data)
             
             # 別忘記前 3 個 tensors 分別為 tokens, segments 以及 masks
             # 且強烈建議在將這些 tensors 丟入 `model` 時指定對應的參數名稱
-            tokens_tensors, segments_tensors, masks_tensors = data[:3]
-            outputs = model(input_ids=tokens_tensors, 
-                            token_type_ids=segments_tensors, 
-                            attention_mask=masks_tensors)
+            inputs = {'input_ids':      batch[0],
+                      'attention_mask': batch[1],
+                      'token_type_ids': batch[2],  # XLM don't use segment_ids
+                      'labels':         batch[3],
+                      'task_id':        task_id}
+            outputs = model(**inputs)
+            tmp_eval_loss, logits = outputs[:2]
             
-            logits = outputs[0]
             _, pred = torch.max(logits.data, 1)
             
-            # 用來計算訓練集的分類準確率
-            if compute_acc:
-                labels = data[3]
-                total += labels.size(0)
-                correct += (pred == labels).sum().item()
-                
             # 將當前 batch 記錄下來
             if predictions is None:
                 predictions = pred
             else:
                 predictions = torch.cat((predictions, pred))
     
-    if compute_acc:
-        acc = correct / total
-        return predictions, acc
     return predictions
     
     

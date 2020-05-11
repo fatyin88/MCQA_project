@@ -1,5 +1,6 @@
-# MMM-MCQA
-Source code for our "MMM" paper at AAAI 2020: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf). If you use the code, please cite the paper:
+# NLP MCQA Project
+
+Source code from: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf). If you use the code, please cite the paper:
 
 ```
 @article{jin2019mmm,

@@ -252,108 +252,11 @@ def set_seed(args):
         torch.cuda.manual_seed_all(args.seed)
 
 
-def train(args, train_datasets, model, tokenizer):
-    """ Train the model """
-    # if args.local_rank in [-1, 0]:
-    #     tb_writer = SummaryWriter()
-    args.train_batch_size = [per_gpu_train_batch_size * max(1, args.n_gpu)
-                             for per_gpu_train_batch_size in args.per_gpu_train_batch_size]
-    train_iters = []
-    tr_batches = []
-    for idx, train_dataset in enumerate(train_datasets):
-        train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
-        train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size[idx])
-        train_iters.append(InfiniteDataLoader(train_dataloader))
-        tr_batches.append(len(train_dataloader))
-
-    ## set sampling proportion
-    total_n_tr_batches = sum(tr_batches)
-    sampling_prob = [float(n_batches) / total_n_tr_batches for n_batches in tr_batches]
-
-    t_total = total_n_tr_batches // args.gradient_accumulation_steps * args.num_train_epochs
-
-    # Prepare optimizer and schedule (linear warmup and decay)
-    no_decay = ['bias', 'LayerNorm.weight']
-    optimizer_grouped_parameters = [
-        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-         'weight_decay': args.weight_decay},
-        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-    ]
-
-    optimizer = BertAdam(optimizer_grouped_parameters,
-                         lr=args.learning_rate,
-                         warmup=args.warmup_proportion,
-                         max_grad_norm=args.max_grad_norm,
-                         t_total=t_total)
-
-    # Train!
-    logger.info("***** Running training *****")
-    # logger.info("  Num examples = %d", len(train_dataset))
-    logger.info("  Num Epochs = %d", args.num_train_epochs)
-    logger.info("  Instantaneous batch size per GPU = %s", ','.join(map(str, args.per_gpu_train_batch_size)))
-    logger.info("  Total train batch size (w. parallel, distributed & accumulation) = %d",
-                   args.train_batch_size[0] * args.gradient_accumulation_steps * (torch.distributed.get_world_size() if args.local_rank != -1 else 1))
-    logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
-    logger.info("  Total optimization steps = %d", t_total)
-
-    global_step = 0
-    tr_loss, logging_loss = 0.0, 0.0
-    nb_tr_examples = 0
-    model.zero_grad()
-    train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0])
-    set_seed(args)  # Added here for reproductibility (even between python 2 and 3)
-    for epoch, _ in enumerate(train_iterator):
-        epoch_iterator = tqdm(trange(total_n_tr_batches), desc="Iteration", disable=args.local_rank not in [-1, 0])
-        for step, _ in enumerate(epoch_iterator):
-            epoch_iterator.set_description("train loss: {}".format(tr_loss / nb_tr_examples if nb_tr_examples else tr_loss))
-            model.train()
-
-            # select task id
-            task_id = np.argmax(np.random.multinomial(1, sampling_prob))
-            batch = train_iters[task_id].get_next()
-
-            batch = tuple(t.to(args.device) for t in batch)
-
-            inputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1],
-                      'token_type_ids': batch[2],
-                      'labels':         batch[3],
-                      'task_id':        task_id}
-            outputs = model(**inputs)
-            loss = outputs[0]
-
-            if args.n_gpu > 1:
-                loss = loss.mean() # mean() to average on multi-gpu parallel training
-            if args.gradient_accumulation_steps > 1:
-                loss = loss / args.gradient_accumulation_steps
-
-            loss.backward()
-
-            tr_loss += loss.item()
-            nb_tr_examples += inputs['input_ids'].size(0)
-            if (step + 1) % args.gradient_accumulation_steps == 0:
-                optimizer.step()
-                model.zero_grad()
-                global_step += 1
-
-        if args.do_epoch_checkpoint:
-            epoch_output_dir = os.path.join(args.output_dir, 'epoch_{}'.format(epoch))
-            os.makedirs(epoch_output_dir, exist_ok=True)
-            output_model_file = os.path.join(epoch_output_dir, WEIGHTS_NAME)
-            output_config_file = os.path.join(epoch_output_dir, CONFIG_NAME)
-            model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-            torch.save(model_to_save.state_dict(), output_model_file)
-            model_to_save.config.to_json_file(output_config_file)
-            tokenizer.save_vocabulary(epoch_output_dir)
-
-        evaluate(args, model, tokenizer, epoch=epoch, is_test=False)
-        evaluate(args, model, tokenizer, epoch=epoch, is_test=True)
-
-    return global_step, tr_loss / global_step
-
-
 def evaluate(args, model, tokenizer, epoch=0, is_test=False):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
+    predictions = None
+    prediction_list = []
+    classes = ('A', 'B', 'C', 'D')
     eval_task_names = args.task_name
     eval_output_dir = args.output_dir
 
@@ -374,17 +277,16 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
         # Eval!
-        logger.info("***** Running evaluation for {} on {} for epoch {} *****".format(eval_task, set_type, epoch))
+        logger.info("***** Running Prediction for {} on {} *****".format(eval_task, set_type))
         logger.info("  Num examples = %d", len(eval_dataset))
         logger.info("  Batch size = %d", args.eval_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
         logits_all = None
         out_label_ids = None
-        for batch in tqdm(eval_dataloader, desc="Evaluating"):
+        for batch in tqdm(eval_dataloader, desc="Predicting"):
             model.eval()
             batch = tuple(t.to(args.device) for t in batch)
-
             with torch.no_grad():
                 inputs = {'input_ids':      batch[0],
                           'attention_mask': batch[1],
@@ -395,7 +297,16 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
                 tmp_eval_loss, logits = outputs[:2]
                 # input_ids, input_mask, segment_ids, label_ids = batch
                 # tmp_eval_loss, logits = model(input_ids, segment_ids, input_mask, label_ids, task_id=task_id)
-
+                _, pred = torch.max(logits.data, 1)
+            
+                if predictions is None:
+                    predictions = pred
+                else:
+                    predictions = torch.cat((predictions, pred))
+                
+                #print('Prediction Results: ', predictions)
+                print('*** Prediction Results: ', ' '.join('%5s' % classes[predictions[j]] for j in range(len(eval_dataset))))
+    
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
             if logits_all is None:
@@ -414,27 +325,11 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
         result = compute_metrics(eval_task, preds, out_label_ids.reshape(-1))
         results.update(result)
 
-        output_eval_file = os.path.join(eval_output_dir, "eval_results_{}_{}.txt".format(eval_task, set_type))
-        with open(output_eval_file, "a") as writer:
-            logger.info("***** Eval results for {} on {} for epoch {} *****".format(eval_task, set_type, epoch))
-            writer.write("***** Eval results for epoch {} *****\n".format(epoch))
-            for key in sorted(result.keys()):
-                logger.info("  %s = %s", key, str(result[key]))
-                writer.write("%s = %s\n" % (key, str(result[key])))
-            logger.info("\n")
+        logger.info("***** Eval results for {} on demo *****".format(eval_task))
+        for key in sorted(result.keys()):
+            logger.info("  %s = %s", key, str(result[key]))
 
-        # get error idx
-        correct_idx = np.argwhere(preds == out_label_ids).tolist()
-        wrong_idx = np.argwhere(preds != out_label_ids).tolist()
-        wrong_idx_dict = {'correct': correct_idx, 'wrong': wrong_idx,
-                          'preds': preds.tolist(), 'logits': logits_all.tolist(),
-                          'labels': out_label_ids.tolist()}
-        json.dump(wrong_idx_dict, open(os.path.join(eval_output_dir,
-                                                    "error_idx_{}_{}.json".format(eval_task, set_type)), 'w'))
 
-    return results
-
-    
 def convert_features_to_tensors(features, output_mode, is_multi_choice=True):
 
     input_ids = []
@@ -496,15 +391,15 @@ def load_and_cache_examples(args, task, tokenizer, set_type='train'):
         elif set_type == 'dev':
             examples = processor.get_dev_examples(args.data_dir[task])
         else:
-            examples = processor.get_test_examples(args.data_dir[task])
+            examples = processor.get_test_examples(args.data_dir[task], level='demo')
         features = convert_examples_to_features(examples, label_list, MAX_SEQ_LENGTHS[task],
                                                 tokenizer, len(label_list),
                                                 output_mode=output_mode,
                                                 do_lower_case=args.do_lower_case,
                                                 is_multi_choice=is_multi_choice)
-        if args.local_rank in [-1, 0]:
-            logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save(features, cached_features_file)
+        #if args.local_rank in [-1, 0]:
+         #   logger.info("Saving features into cached file %s", cached_features_file)
+         #   torch.save(features, cached_features_file)
 
     # Convert to Tensors and build dataset
     dataset = convert_features_to_tensors(features, output_mode, is_multi_choice=is_multi_choice)
@@ -665,20 +560,6 @@ def main():
                                                           output_device=args.local_rank)
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
-
-    if args.do_train:
-        train_datasets = [load_and_cache_examples(args, task_name, tokenizer, set_type='train')
-                          for task_name in args.task_name]
-        global_step, tr_loss = train(args, train_datasets, model, tokenizer)
-        logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
-
-        # final save of model parameters
-        output_model_file = os.path.join(args.output_dir, WEIGHTS_NAME)
-        output_config_file = os.path.join(args.output_dir, CONFIG_NAME)
-        model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-        torch.save(model_to_save.state_dict(), output_model_file)
-        model_to_save.config.to_json_file(output_config_file)
-        tokenizer.save_vocabulary(args.output_dir)
 
     if args.do_eval and not args.do_train:
         if hasattr(model, 'module'):

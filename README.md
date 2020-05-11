@@ -1,6 +1,6 @@
 # NLP MCQA Project
 
-Source code from: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf). If you use the code, please cite the paper:
+Source code from: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf).
 
 ```
 @article{jin2019mmm,

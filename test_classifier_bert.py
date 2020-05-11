@@ -716,7 +716,7 @@ def main():
         if hasattr(model, 'module'):
             model.module.load_state_dict(torch.load(os.path.join(args.output_dir, "pytorch_model.bin")))
         else:
-            model.load_state_dict(torch.load(os.path.join(args.output_dir, "pytorch_model.bin")),strict='False')
+            model.load_state_dict(torch.load(os.path.join(args.output_dir, "pytorch_model.bin")),strict=False)
 
         model.eval()
         epoch = args.num_train_epochs

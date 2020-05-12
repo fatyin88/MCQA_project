@@ -138,7 +138,7 @@ class DreamProcessor(DataProcessor):
                         if level is None:
                             examples = examples
                         else:
-                            random_index = randint(0, len(questions)-1)
+                            random_index = randint(0, len(data)-1)
                             examples = examples[random_index]
         return examples
 

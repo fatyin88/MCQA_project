@@ -54,7 +54,7 @@ for task_name_ in task_name.split(','):
 data_dir = ','.join(data_dir)
 
 # start running the model
-command = 'python predict_classifier_bert.py --task_name {task_name} ' \
+command = 'python pred_classifier_bert.py --task_name {task_name} ' \
           '--do_eval ' \
           '--data_dir {data_dir} ' \
           '--bert_model {BERT_DIR} ' \

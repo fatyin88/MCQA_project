@@ -71,3 +71,4 @@ command = 'python pred_classifier_bert.py --task_name {task_name} ' \
                                                     num_train_epochs=num_train_epochs,
                                                     max_grad_norm=max_grad_norm,
                                                     gradient_accumulation_steps=gradient_accumulation_steps)
+os.system(command)

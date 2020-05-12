@@ -277,7 +277,7 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
         # Eval!
-        logger.info("***** Running Prediction for {} on {} *****".format(eval_task, set_type))
+        logger.info("***** Running Prediction for {} on demo *****".format(eval_task))
         logger.info("  Num examples = %d", len(eval_dataset))
         logger.info("  Batch size = %d", args.eval_batch_size)
         eval_loss = 0.0

@@ -114,7 +114,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                                  output_mode, is_multi_choice=True):
     """Loads a data file into a list of `InputBatch`s."""
 
-    print("#examples", len(examples))
+    #print("#examples", len(examples))
 
     label_map = {}
     for (i, label) in enumerate(label_list):
@@ -125,8 +125,8 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
     else:
         features = []
     for (ex_index, example) in enumerate(examples):
-        if ex_index % 10000 == 0:
-            logger.info("Writing example %d of %d" % (ex_index, len(examples)))
+        #if ex_index % 10000 == 0:
+         #   logger.info("Writing example %d of %d" % (ex_index, len(examples)))
 
         tokens_a = tokenizer.tokenize(example.text_a.lower() if do_lower_case else example.text_a)  # dialogues
 
@@ -199,7 +199,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
     if is_multi_choice:
         if len(features[-1]) == 0:
             features = features[:-1]
-    print('#features', len(features))
+    # print('#features', len(features))
     return features
 
 

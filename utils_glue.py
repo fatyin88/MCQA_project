@@ -100,17 +100,17 @@ class DreamProcessor(DataProcessor):
     def get_train_examples(self, data_dir, level=None):
         """See base class."""
         return self._create_examples(
-            data_dir, "train")
+            data_dir, "train", level=level)
 
     def get_dev_examples(self, data_dir, level=None):
         """See base class."""
         return self._create_examples(
-            data_dir, "dev")
+            data_dir, "dev", level=level)
 
     def get_test_examples(self, data_dir, level=None):
         """See base class."""
         return self._create_examples(
-            data_dir, "test")
+            data_dir, "test", level=level)
 
     def get_labels(self):
         """See base class."""
@@ -122,24 +122,39 @@ class DreamProcessor(DataProcessor):
         examples = []
         with open(data_dir + "/{}.json".format(set_type), 'r') as f:
             data = json.load(f)
-            for i in range(len(data)):
+            if level is None:
+                for i in range(len(data)):
+                    for j in range(len(data[i][1])):
+                        text_a = '\n'.join(data[i][0])
+                        text_c = data[i][1][j]["question"]
+                        options = []
+                        for k in range(len(data[i][1][j]["choice"])):
+                            options.append(data[i][1][j]["choice"][k])
+                        answer = data[i][1][j]["answer"]
+                        label = str(options.index(answer))
+                        for k in range(len(options)):
+                            guid = "%s-%s-%s" % (set_type, i, k)
+                            examples.append(
+                                InputExample(guid=guid, text_a=text_a, text_b=options[k], label=label, text_c=text_c))
+            else:
+                i = randint(0, len(data)-1)
+                logger.info("*** Drawing example ***")
+                logger.info(f"example_id: {i}")
+                logger.info(f"Passage: {data[i][0]}")
                 for j in range(len(data[i][1])):
                     text_a = '\n'.join(data[i][0])
                     text_c = data[i][1][j]["question"]
+                    logger.info(f"Question: {text_c}")
                     options = []
                     for k in range(len(data[i][1][j]["choice"])):
                         options.append(data[i][1][j]["choice"][k])
+                    logger.info(f"Choice: {options}")
                     answer = data[i][1][j]["answer"]
                     label = str(options.index(answer))
                     for k in range(len(options)):
                         guid = "%s-%s-%s" % (set_type, i, k)
                         examples.append(
                             InputExample(guid=guid, text_a=text_a, text_b=options[k], label=label, text_c=text_c))
-                        if level is None:
-                            examples = examples
-                        else:
-                            random_index = randint(0, len(data)-1)
-                            examples = examples[random_index]
         return examples
 
 

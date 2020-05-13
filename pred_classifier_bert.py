@@ -324,6 +324,8 @@ def evaluate(args, model, tokenizer, epoch=0, is_test=False):
             preds = np.squeeze(logits_all)
         result = compute_metrics(eval_task, preds, out_label_ids.reshape(-1))
         results.update(result)
+        out_answers=tuple(out_label_ids.reshape(-1))
+        print('*** Answers: ', ' '.join('%5s' % classes[out_answers[j]] for j in range(len(eval_dataset))))
 
         logger.info("***** Eval results for {} on demo *****".format(eval_task))
         for key in sorted(result.keys()):

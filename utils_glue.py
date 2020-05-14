@@ -416,17 +416,17 @@ class MCTest160Processor(DataProcessor):
 
 class MCTest500Processor(DataProcessor):
 
-    def get_train_examples(self, data_dir):
+    def get_train_examples(self, data_dir, level=None):
         """See base class."""
-        return self._read_samples(data_dir, "train")
+        return self._read_samples(data_dir, "train", level=level)
 
-    def get_test_examples(self, data_dir):
+    def get_test_examples(self, data_dir, level=None):
         """See base class."""
-        return self._read_samples(data_dir, "test")
+        return self._read_samples(data_dir, "test", level=level)
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, level=None):
         """See base class."""
-        return self._read_samples(data_dir, "dev")
+        return self._read_samples(data_dir, "dev", level=level)
 
     def get_labels(self):
         """See base class."""
@@ -435,7 +435,7 @@ class MCTest500Processor(DataProcessor):
     def get_dataset_name(self):
         return 'MCTest500'
 
-    def _read_samples(self, data_dir, set_type):
+    def _read_samples(self, data_dir, set_type, level=None):
 
         with open(join(data_dir, "mc500.{}.tsv".format(set_type)), 'r', encoding='utf-8') as fpr:
             articles = []
@@ -459,14 +459,32 @@ class MCTest500Processor(DataProcessor):
 
         examples = []
         example_id = 0
-        for article, question, option, answer in zip(articles, questions, options, answers):
-            for ques, opt, ans in zip(question, option, answer):
-                example_id += 1
-                for k, op in enumerate(opt):
-                    guid = "%s-%s-%s" % (set_type, example_id, k)
-                    examples.append(
-                            InputExample(guid=guid, text_a=article, text_b=op, label=ans,
-                                         text_c=ques))
+        article_id = 0
+        rand_id = randint(0, len(articles)-1)
+
+        if level is None: 
+            for article, question, option, answer in zip(articles, questions, options, answers):
+                for ques, opt, ans in zip(question, option, answer):
+                    example_id += 1
+                    for k, op in enumerate(opt):
+                        guid = "%s-%s-%s" % (set_type, example_id, k)
+                        examples.append(
+                                InputExample(guid=guid, text_a=article, text_b=op, label=ans,
+                                             text_c=ques))
+        else:
+            for article, question, option, answer in zip(articles, questions, options, answers):
+                article_id += 1
+                if article_id != rand_id:
+                    continue
+                logger.info("*** Drawing example ***")
+                logger.info(f"article_id: {article_id-1}")
+                for ques, opt, ans in zip(question, option, answer):
+                    example_id += 1   
+                    for k, op in enumerate(opt):
+                        guid = "%s-%s-%s" % (set_type, example_id, k)
+                        examples.append(
+                                InputExample(guid=guid, text_a=article, text_b=op, label=ans,
+                                             text_c=ques))
 
         return examples
 

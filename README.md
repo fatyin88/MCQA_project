@@ -1,6 +1,16 @@
 # NLP MCQA Project
 
-Source code from: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf).
+## Introduction
+
+We are required to develop a multiple-choice document-based question answering system to select the answer from several candidates. 
+Input: a document, and a question (query) 
+Output: an answer (select from options)
+
+We are provided three multiple-choice document-based question answering dataset to
+evaluate our QA system, i.e., MCTest, RACE, and DREAM. 
+
+To implement our QA system, we managed to learn the approach from [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek Hakkani-tur. "MMM: Multi-stage Multi-task Learning for Multi-choice Reading Comprehension." AAAI (2020).](https://arxiv.org/pdf/1910.00458.pdf). We are applying Multi-stage Multi-task Learning method on Bert Large Model to train and test our model.
+
 
 ```
 @article{jin2019mmm,
@@ -14,6 +24,7 @@ Source code from: [Jin, Di, Shuyang Gao, Jiun-Yu Kao, Tagyoung Chung, and Dilek 
 ## Requirements
 ### Python packages
 - Pytorch
+- Python 3.69 
 
 ## Usage
 1. All five MCQA datasets are put in the folder "data" and to unzip the RACE data, run the following command:
@@ -28,27 +39,10 @@ python run_classifier_bert_exe.py TASK_NAME MODEL_DIR BATCH_SIZE_PER_GPU GRADIEN
 ```
 Here we explain each required argument in details:
 - TASK_NAME: It can be a single task or multiple tasks. If a single task, the options are: dream, race, toefl, mcscript, mctest160, mctest500, mnli, snli, etc. Multiple tasks can be any combinations of those above-mentioned single tasks. For example, if you want to train a multi-task model on the dream and race tasks together, then this variable should be set as "dream,race".
-- MODEL_DIR: Model would be initialized by the parameters stored in this directory. 
+- MODEL_DIR: Model would be initialized by the parameters stored in this directory. In this project, we focus on Bert-Large-Uncased model.
 - BATCH_SIZE_PER_GPU: Batch size of data in a single GPU.
 - GRADIENT_ACCUMULATION_STEPS: How many steps to accumulate the gradients for one step of back-propagation.
 
-One note: the effective batch size for training is important, which is the product of three variables: BATCH_SIZE_PER_GPU, NUM_OF_GPUs, and GRADIENT_ACCUMULATION_STEPS. In my experience, it should be at least higher than 12 and 24 would be great. 
+One note: the effective batch size for training is important, which is the product of three variables: BATCH_SIZE_PER_GPU, NUM_OF_GPUs, and GRADIENT_ACCUMULATION_STEPS. It is recommended to be at least higher than 12 and 24. 
 
-3. To train the RoBERTa model (including base and large versions), use the following command:
-
-```
-python run_classifier_roberta_exe.py TASK_NAME MODEL_DIR BATCH_SIZE_PER_GPU GRADIENT_ACCUMULATION_STEPS
-```
-
-4. To facilitate your use of this code, I provide the trained model parameters for some settings:
-
-| Model Type        | Fine-tune steps           | Download Links  |
-| ------------- |:-------------:| -----:|
-| BERT-Base      | MNLI,SNLI->DREAM,RACE | [Link](https://drive.google.com/open?id=1EECS9na9PpX9CO_cCzYj9FDkiBvOpyxv) |
-| BERT-Large      | MNLI,SNLI->DREAM,RACE | [Link](https://drive.google.com/open?id=1_kEU-26HGpn4kdLseBCTI9QE5xzln4FU) |
-| RoBERTa-Large      | MNLI,SNLI->DREAM,RACE | [Link](https://drive.google.com/open?id=1Cz5p6RLuc8F15ABSwv65ctriR-Wi15A3) |
-| BERT-Base      | MNLI,SNLI | [Link](https://drive.google.com/open?id=19IL9wLz4QiNJ-XPHusJ1OLH54qpq8Hjr) |
-| BERT-Large      | MNLI,SNLI | [Link](https://drive.google.com/open?id=1VtNH4jA7L_vZvi_kKgkfFy_1n1ADueaO) |
-| RoBERTa-Large      | MNLI,SNLI | [Link](https://drive.google.com/open?id=1D3p8IXfli0m5PRKb99iusjhROOI7hxwN) |
-| BERT-Large      | RACE | [Link](https://drive.google.com/open?id=1y9vD5aIrobCXXXaSn46ISehMu3426tM3) |
-| RoBERTa-Large      | RACE | [Link](https://drive.google.com/open?id=1qBX0GKEVK7UoaQ9dO4yYuRzAE2qfQcMs) |
+For BERT-Large, 16 GB GPU (which is the maximum memory size for Cloud GPU in Colab) cannot hold a single batch since each data sample is composed of four choices which comprise of 4 sequences of 512 max_sequence_length. So in order to put a single batch to a 16 GB GPU, we need to decrease the max_sequence_length from 512 to some number smaller, although this will degrade the performance by a little.

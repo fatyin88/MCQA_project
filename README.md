@@ -3,8 +3,8 @@
 ## Introduction
 
 We are required to develop a multiple-choice document-based question answering system to select the answer from several candidates. 
-Input: a document, and a question (query) 
-Output: an answer (select from options)
+/nInput: a document, and a question (query) 
+/nOutput: an answer (select from options)
 
 We are provided three multiple-choice document-based question answering dataset to
 evaluate our QA system, i.e., MCTest, RACE, and DREAM. 

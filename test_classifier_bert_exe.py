@@ -3,8 +3,8 @@ import os
 
 task_name = sys.argv[1]
 BERT_DIR = sys.argv[2]
-per_gpu_train_batch_size = sys.argv[3]
-gradient_accumulation_steps = sys.argv[4]
+per_gpu_train_batch_size = 1
+gradient_accumulation_steps = 8
 
 # set up some hypers
 if task_name == 'dream':

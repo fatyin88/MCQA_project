@@ -687,7 +687,7 @@ def main():
 
         model.eval()
         epoch = args.num_train_epochs
-        #evaluate(args, model, tokenizer, epoch=epoch, is_test=False)
+        evaluate(args, model, tokenizer, epoch=epoch, is_test=False)
         evaluate(args, model, tokenizer, epoch=epoch, is_test=True)
 
 if __name__ == "__main__":

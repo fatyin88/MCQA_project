@@ -45,6 +45,6 @@ Here we explain each required argument in details:
 - BATCH_SIZE_PER_GPU: Batch size of data in a single GPU.
 - GRADIENT_ACCUMULATION_STEPS: How many steps to accumulate the gradients for one step of back-propagation.
 
-One note: the effective batch size for training is important, which is the product of three variables: BATCH_SIZE_PER_GPU, NUM_OF_GPUs, and GRADIENT_ACCUMULATION_STEPS. It is recommended to be at least higher than 12 and 24. 
+One note: the effective batch size for training is important, which is the product of three variables: BATCH_SIZE_PER_GPU, NUM_OF_GPUs, and GRADIENT_ACCUMULATION_STEPS. It is recommended to be at least higher than 12 and 24 would be great. 
 
 For BERT-Large, 16 GB GPU (which is the maximum memory size for Cloud GPU in Colab) cannot hold a single batch since each data sample is composed of four choices which comprise of 4 sequences of 512 max_sequence_length. So in order to put a single batch to a 16 GB GPU, we need to decrease the max_sequence_length from 512 to some number smaller, although this will degrade the performance by a little.

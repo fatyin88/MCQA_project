@@ -48,3 +48,43 @@ Here we explain each required argument in details:
 One note: the effective batch size for training is important, which is the product of three variables: BATCH_SIZE_PER_GPU, NUM_OF_GPUs, and GRADIENT_ACCUMULATION_STEPS. It is recommended to be at least higher than 12 and 24 would be great. 
 
 For BERT-Large, 16 GB GPU (which is the maximum memory size for Cloud GPU in Colab) cannot hold a single batch since each data sample is composed of four choices which comprise of 4 sequences of 512 max_sequence_length. So in order to put a single batch to a 16 GB GPU, we need to decrease the max_sequence_length from 512 to some number smaller, although this will degrade the performance by a little.
+
+3. To test the BERT model (including base and large versions), use the following command:
+
+```
+python test_classifier_bert_exe.py TASK_NAME MODEL_DIR 
+```
+If we have already trained and saved the model, we can simply load the model state to a pretrained model so that we can have a fine-tuned model for prediction.
+
+The saved model state ("pytorch_model.bin") have to be placed at "/content/MCQA_project/tmp/{task}_{model_dir}" folder, e.g. "race_bert-large-uncased"
+
+4. To predict the answer by the BERT model (including base and large versions), use the following command:
+
+```
+python pred_classifier_bert_exe.py TASK_NAME MODEL_DIR 
+```
+Prediction Demostration - MCTest (mctest160 and mctest500)
+Step 1: Run the command and system will randomly draw a sample from test.tsv
+
+Step 2: The prediction results and answers will be shown.
+
+Step 3: Change the random seed in pred_classifier_bert_exe.py to select another sample
+
+Prediction Demostration - Race
+Step 1: Create a "demo" folder in "test" folder, which is the input folder
+
+Step 2: Randomly select a txt file from "test" folder, which includes both the document and question
+
+Step 3: Put the selected file into the "demo" folder
+
+Step 4: Run the command and it will show the prediction results and answers
+
+Prediction Demostration - Dream
+Step 1: Run the command and system will randomly draw a sample from test.json
+
+Step 2: The prediction results and answers will be shown.
+
+Step 3: Change the random seed in pred_classifier_bert_exe.py to select another sample
+
+
+

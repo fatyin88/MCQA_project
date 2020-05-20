@@ -63,14 +63,14 @@ The saved model state ("pytorch_model.bin") have to be placed at "/content/MCQA_
 ```
 python pred_classifier_bert_exe.py TASK_NAME MODEL_DIR 
 ```
-Prediction Demostration - MCTest (mctest160 and mctest500)
+### Prediction Demostration - MCTest (mctest160 and mctest500)
 Step 1: Run the command and system will randomly draw a sample from test.tsv
 
 Step 2: The prediction results and answers will be shown.
 
 Step 3: Change the random seed in pred_classifier_bert_exe.py to select another sample
 
-Prediction Demostration - Race
+### Prediction Demostration - Race
 Step 1: Create a "demo" folder in "test" folder, which is the input folder
 
 Step 2: Randomly select a txt file from "test" folder, which includes both the document and question
@@ -79,7 +79,7 @@ Step 3: Put the selected file into the "demo" folder
 
 Step 4: Run the command and it will show the prediction results and answers
 
-Prediction Demostration - Dream
+### Prediction Demostration - Dream
 Step 1: Run the command and system will randomly draw a sample from test.json
 
 Step 2: The prediction results and answers will be shown.

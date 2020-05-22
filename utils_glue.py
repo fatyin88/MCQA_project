@@ -1431,8 +1431,8 @@ GLUE_TASKS_NUM_LABELS = {
 }
 
 MAX_SEQ_LENGTHS = {
-    "race": 320,
-    "dream": 320,
+    "race": 512,
+    "dream": 512,
     "mnli": 128,
     "snli": 128,
     "cola": 128,
@@ -1446,8 +1446,8 @@ MAX_SEQ_LENGTHS = {
     "mnli-mm": 128,
     "toefl": 512,
     "mctest": 512,
-    "mctest160": 320,
-    "mctest500": 320,
+    "mctest160": 512,
+    "mctest500": 512,
     "mcscript": 512,
     "yelp": 128,
 }
